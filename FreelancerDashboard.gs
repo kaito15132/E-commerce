@@ -284,7 +284,7 @@ function createCalendarSheet(ss) {
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeights(9, 6, 118);
 
-  // Keep sidebar cards compact and independent from the taller calendar day rows.
+  // Keep the right sidebar focused on simple month-level context; action tables sit below the calendar.
   sectionTitle(sheet, 'J2:M2', 'Calendar Legend');
   const legend = [
     ['[P]', 'Project deadline or launch date'],
@@ -310,45 +310,70 @@ function createCalendarSheet(ss) {
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeights(3, 5, 28);
 
-  sectionTitle(sheet, 'J16:M16', 'Upcoming This Week');
-  sheet.getRange('J17:M17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  sectionTitle(sheet, 'J8:M8', 'Monthly Deadline Summary');
+  const summaryLabels = [
+    'Total Deadlines',
+    'Project Deadlines',
+    'Deliverables Due',
+    'Payments Due',
+    'Contracts Due',
+    'Revisions Due'
+  ];
+  summaryLabels.forEach((label, i) => {
+    const row = 9 + i;
+    sheet.getRange(row, 10).setFontSize(20).setFontWeight('bold').setFontColor(FVD.colors.darkNavy)
+      .setHorizontalAlignment('center').setVerticalAlignment('middle');
+    sheet.getRange(row, 11, 1, 3).merge().setValue(label)
+      .setFontSize(10).setFontColor(FVD.colors.mutedText).setWrap(true)
+      .setHorizontalAlignment('left').setVerticalAlignment('middle');
+  });
+  sheet.getRange('J9:M14')
+    .setBackground(FVD.colors.white)
+    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+
+  sectionTitle(sheet, 'J16:M16', 'Deadlines by Type');
+  sheet.getRange('J17:M17').setValues([['Type', 'Count', 'Monthly Mix', '']]);
   styleTableHeader(sheet.getRange('J17:M17'));
-  sheet.getRange('J17:M17')
-    .setFontSize(9)
-    .setVerticalAlignment('middle')
-    .setHorizontalAlignment('center');
-  sheet.getRange('J18:M27')
+  sheet.getRange('J18:J22').setValues([['Project'], ['Deliverable'], ['Payment'], ['Contract'], ['Revision']]);
+  sheet.getRange('J18:M22')
     .setBackground(FVD.colors.white)
     .setFontSize(9)
     .setWrap(false)
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('L18:L27').setWrap(true);
-  sheet.getRange('J18:J27').setNumberFormat('mmm d').setHorizontalAlignment('center');
-  sheet.getRange('K18:K27').setHorizontalAlignment('center');
+  sheet.getRange('K18:K22').setHorizontalAlignment('center');
   sheet.setRowHeight(16, 28);
   sheet.setRowHeight(17, 26);
-  sheet.setRowHeights(18, 10, 32);
+  sheet.setRowHeights(18, 5, 28);
 
-  sectionTitle(sheet, 'J30:M30', 'Overdue Items');
-  sheet.getRange('J31:M31').setValues([['Date', 'Type', 'Item', 'Vendor']]);
-  styleTableHeader(sheet.getRange('J31:M31'));
-  sheet.getRange('J31:M31')
-    .setFontSize(9)
-    .setVerticalAlignment('middle')
-    .setHorizontalAlignment('center');
-  sheet.getRange('J32:M41')
+  sectionTitle(sheet, 'B16:E16', 'Upcoming This Week');
+  sheet.getRange('B17:E17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('B17:E17'));
+  sheet.getRange('B18:E27')
     .setBackground(FVD.colors.white)
     .setFontSize(9)
     .setWrap(false)
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('L32:L41').setWrap(true);
-  sheet.getRange('J32:J41').setNumberFormat('mmm d').setHorizontalAlignment('center');
-  sheet.getRange('K32:K41').setHorizontalAlignment('center');
-  sheet.setRowHeight(30, 28);
-  sheet.setRowHeight(31, 26);
-  sheet.setRowHeights(32, 10, 32);
+  sheet.getRange('D18:D27').setWrap(true);
+  sheet.getRange('B18:B27').setNumberFormat('mmm d').setHorizontalAlignment('center');
+  sheet.getRange('C18:C27').setHorizontalAlignment('center');
+
+  sheet.setColumnWidth(9, 145);
+  sectionTitle(sheet, 'F16:I16', 'Overdue Items');
+  sheet.getRange('F17:I17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('F17:I17'));
+  sheet.getRange('F18:I27')
+    .setBackground(FVD.colors.white)
+    .setFontSize(9)
+    .setWrap(false)
+    .setVerticalAlignment('middle')
+    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('H18:H27').setWrap(true);
+  sheet.getRange('F18:F27').setNumberFormat('mmm d').setHorizontalAlignment('center');
+  sheet.getRange('G18:G27').setHorizontalAlignment('center');
+  sheet.setRowHeight(17, 26);
+  sheet.setRowHeights(18, 10, 32);
 
   sheet.getRange('AA1:AF1').merge().setValue('Calendar Event Helper').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
   sheet.getRange('AA2:AF2').setValues([['Date', 'Type', 'Item', 'Vendor', 'Calendar Label', 'Status']]);
@@ -655,8 +680,9 @@ function addDashboardFormulas(ss) {
 function addCalendarFormulas(ss) {
   const sheet = ss.getSheetByName('Calendar');
   sheet.getRange('AA3').setFormula(getCalendarEventsFormula());
-  sheet.getRange('J18').setFormula(getCalendarUpcomingThisWeekFormula());
-  sheet.getRange('J32').setFormula(getCalendarOverdueItemsFormula());
+  sheet.getRange('B18').setFormula(getCalendarUpcomingThisWeekFormula());
+  sheet.getRange('F18').setFormula(getCalendarOverdueItemsFormula());
+  addCalendarMonthlySummaryFormulas(sheet);
 
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 7; c++) {
@@ -665,6 +691,20 @@ function addCalendarFormulas(ss) {
       cell.setFormula(`=IF(MONTH(${calendarDate})=$C$7,DAY(${calendarDate})&IFERROR(CHAR(10)&TEXTJOIN(CHAR(10),TRUE,FILTER($AE$3:$AE,$AA$3:$AA=${calendarDate})),""),"")`);
     }
   }
+}
+
+function addCalendarMonthlySummaryFormulas(sheet) {
+  const monthStart = 'DATE($F$6,$C$7,1)';
+  const monthEnd = 'EOMONTH(DATE($F$6,$C$7,1),0)+1';
+  const countFormula = type => `=COUNTIFS($AA$3:$AA,">="&${monthStart},$AA$3:$AA,"<"&${monthEnd}${type ? `,$AB$3:$AB,"${type}"` : ''})`;
+  const types = ['Project', 'Deliverable', 'Payment', 'Contract', 'Revision'];
+
+  sheet.getRange('J9').setFormula(countFormula(''));
+  types.forEach((type, i) => {
+    sheet.getRange(10 + i, 10).setFormula(countFormula(type));
+    sheet.getRange(18 + i, 11).setFormula(`=$J$${10 + i}`);
+    sheet.getRange(18 + i, 12).setFormula(`=IF($K${18 + i}=0,"",SPARKLINE($K${18 + i},{"charttype","bar";"max",MAX($K$18:$K$22);"color1","#2F80ED"}))`);
+  });
 }
 
 function getCalendarUpcomingThisWeekFormula() {
