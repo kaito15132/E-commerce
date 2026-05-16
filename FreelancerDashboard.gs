@@ -270,8 +270,9 @@ function createCalendarSheet(ss) {
   sheet.getRange('E6').setValue('Year').setFontWeight('bold').setFontColor(FVD.colors.darkNavy);
   sheet.getRange('F6').setValue(new Date().getFullYear()).setBackground(FVD.colors.white);
   sheet.getRange('B6:F6').setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('C7').setFormula('=MONTH(DATEVALUE($C$6&" 1"))');
-  sheet.hideRows(7);
+  sheet.getRange('AA1').setValue('Calendar Month Helper').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
+  sheet.getRange('AA2').setValue('Selected Month Number').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
+  sheet.getRange('AA3').setFormula('=MONTH(DATEVALUE($C$6&" 1"))');
 
   sheet.getRange('B8:H8').setValues([['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']]);
   styleTableHeader(sheet.getRange('B8:H8'));
@@ -360,11 +361,11 @@ function createCalendarSheet(ss) {
   sheet.setRowHeight(17, 26);
   sheet.setRowHeights(18, 10, 32);
 
-  sheet.getRange('AA1:AF1').merge().setValue('Calendar Event Helper').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
-  sheet.getRange('AA2:AF2').setValues([['Date', 'Type', 'Item', 'Vendor', 'Calendar Label', 'Status']]);
-  styleTableHeader(sheet.getRange('AA2:AF2'));
-  sheet.getRange('AA3:AF300').setBackground(FVD.colors.lightGray);
-  sheet.hideColumns(27, 6);
+  sheet.getRange('AB1:AG1').merge().setValue('Calendar Event Helper').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
+  sheet.getRange('AB2:AG2').setValues([['Date', 'Type', 'Item', 'Vendor', 'Calendar Label', 'Status']]);
+  styleTableHeader(sheet.getRange('AB2:AG2'));
+  sheet.getRange('AB3:AG300').setBackground(FVD.colors.lightGray);
+  sheet.hideColumns(27, 7);
 }
 
 function createProjectsSheet(ss) {
@@ -664,7 +665,7 @@ function addDashboardFormulas(ss) {
 
 function addCalendarFormulas(ss) {
   const sheet = ss.getSheetByName('Calendar');
-  sheet.getRange('AA3').setFormula(getCalendarEventsFormula());
+  sheet.getRange('AB3').setFormula(getCalendarEventsFormula());
   sheet.getRange('B18').setFormula(getCalendarUpcomingThisWeekFormula());
   sheet.getRange('G18').setFormula(getCalendarOverdueItemsFormula());
   addCalendarMonthlySummaryFormulas(sheet);
@@ -672,16 +673,16 @@ function addCalendarFormulas(ss) {
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 7; c++) {
       const cell = sheet.getRange(9 + r, 2 + c);
-      const calendarDate = `DATE($F$6,$C$7,1)-WEEKDAY(DATE($F$6,$C$7,1),1)+1+${r * 7 + c}`;
-      cell.setFormula(`=IF(MONTH(${calendarDate})=$C$7,DAY(${calendarDate})&IFERROR(CHAR(10)&TEXTJOIN(CHAR(10),TRUE,FILTER($AE$3:$AE,$AA$3:$AA=${calendarDate})),""),"")`);
+      const calendarDate = `DATE($F$6,$AA$3,1)-WEEKDAY(DATE($F$6,$AA$3,1),1)+1+${r * 7 + c}`;
+      cell.setFormula(`=IF(MONTH(${calendarDate})=$AA$3,DAY(${calendarDate})&IFERROR(CHAR(10)&TEXTJOIN(CHAR(10),TRUE,FILTER($AF$3:$AF,$AB$3:$AB=${calendarDate})),""),"")`);
     }
   }
 }
 
 function addCalendarMonthlySummaryFormulas(sheet) {
-  const monthStart = 'DATE($F$6,$C$7,1)';
-  const monthEnd = 'EOMONTH(DATE($F$6,$C$7,1),0)+1';
-  const countFormula = type => `=COUNTIFS($AA$3:$AA,">="&${monthStart},$AA$3:$AA,"<"&${monthEnd}${type ? `,$AB$3:$AB,"${type}"` : ''})`;
+  const monthStart = 'DATE($F$6,$AA$3,1)';
+  const monthEnd = 'EOMONTH(DATE($F$6,$AA$3,1),0)+1';
+  const countFormula = type => `=COUNTIFS($AB$3:$AB,">="&${monthStart},$AB$3:$AB,"<"&${monthEnd}${type ? `,$AC$3:$AC,"${type}"` : ''})`;
   const types = ['Project', 'Deliverable', 'Payment', 'Contract', 'Revision'];
 
   sheet.getRange('J9').setFormula(countFormula(''));
@@ -691,11 +692,11 @@ function addCalendarMonthlySummaryFormulas(sheet) {
 }
 
 function getCalendarUpcomingThisWeekFormula() {
-  return '=IFERROR(SORTN(FILTER({$AA$3:$AA,$AB$3:$AB,$AC$3:$AC,$AD$3:$AD},$AA$3:$AA>=TODAY(),$AA$3:$AA<=TODAY()+7),10,0,1,TRUE),"")';
+  return '=IFERROR(SORTN(FILTER({$AB$3:$AB,$AC$3:$AC,$AD$3:$AD,$AE$3:$AE},$AB$3:$AB>=TODAY(),$AB$3:$AB<=TODAY()+7),10,0,1,TRUE),"")';
 }
 
 function getCalendarOverdueItemsFormula() {
-  return '=IFERROR(SORTN(FILTER({$AA$3:$AA,$AB$3:$AB,$AC$3:$AC,$AD$3:$AD},$AA$3:$AA<TODAY(),$AF$3:$AF<>"Complete",$AF$3:$AF<>"Approved",$AF$3:$AF<>"Paid",$AF$3:$AF<>"Signed",$AF$3:$AF<>"Canceled",$AF$3:$AF<>"Not Required"),10,0,1,TRUE),"")';
+  return '=IFERROR(SORTN(FILTER({$AB$3:$AB,$AC$3:$AC,$AD$3:$AD,$AE$3:$AE},$AB$3:$AB<TODAY(),$AG$3:$AG<>"Complete",$AG$3:$AG<>"Approved",$AG$3:$AG<>"Paid",$AG$3:$AG<>"Signed",$AG$3:$AG<>"Canceled",$AG$3:$AG<>"Not Required"),10,0,1,TRUE),"")';
 }
 
 function getWatchlistFormula() {
@@ -793,7 +794,7 @@ function addDateRules(sheet, a1) {
 function addCalendarConditionalFormatting(sheet) {
   const rules = sheet.getConditionalFormatRules();
   rules.push(SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND(B9<>"",DATE($F$6,$C$7,VALUE(REGEXEXTRACT(B9,"^\\d+")))=TODAY())')
+    .whenFormulaSatisfied('=AND(B9<>"",DATE($F$6,$AA$3,VALUE(REGEXEXTRACT(B9,"^\\d+")))=TODAY())')
     .setBackground('#EAF8F6')
     .setFontColor(FVD.colors.darkNavy)
     .setRanges([sheet.getRange('B9:H14')])
