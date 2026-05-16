@@ -331,21 +331,6 @@ function createCalendarSheet(ss) {
     .setBackground(FVD.colors.white)
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
 
-  sectionTitle(sheet, 'J16:M16', 'Deadlines by Type');
-  sheet.getRange('J17:M17').setValues([['Type', 'Count', 'Monthly Mix', '']]);
-  styleTableHeader(sheet.getRange('J17:M17'));
-  sheet.getRange('J18:J22').setValues([['Project'], ['Deliverable'], ['Payment'], ['Contract'], ['Revision']]);
-  sheet.getRange('J18:M22')
-    .setBackground(FVD.colors.white)
-    .setFontSize(9)
-    .setWrap(false)
-    .setVerticalAlignment('middle')
-    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('K18:K22').setHorizontalAlignment('center');
-  sheet.setRowHeight(16, 28);
-  sheet.setRowHeight(17, 26);
-  sheet.setRowHeights(18, 5, 28);
-
   sectionTitle(sheet, 'B16:E16', 'Upcoming This Week');
   sheet.getRange('B17:E17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
   styleTableHeader(sheet.getRange('B17:E17'));
@@ -359,19 +344,19 @@ function createCalendarSheet(ss) {
   sheet.getRange('B18:B27').setNumberFormat('mmm d').setHorizontalAlignment('center');
   sheet.getRange('C18:C27').setHorizontalAlignment('center');
 
-  sheet.setColumnWidth(9, 145);
-  sectionTitle(sheet, 'F16:I16', 'Overdue Items');
-  sheet.getRange('F17:I17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
-  styleTableHeader(sheet.getRange('F17:I17'));
-  sheet.getRange('F18:I27')
+  // Column F is intentionally left blank to separate the two action tables.
+  sectionTitle(sheet, 'G16:J16', 'Overdue Items');
+  sheet.getRange('G17:J17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('G17:J17'));
+  sheet.getRange('G18:J27')
     .setBackground(FVD.colors.white)
     .setFontSize(9)
     .setWrap(false)
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('H18:H27').setWrap(true);
-  sheet.getRange('F18:F27').setNumberFormat('mmm d').setHorizontalAlignment('center');
-  sheet.getRange('G18:G27').setHorizontalAlignment('center');
+  sheet.getRange('I18:I27').setWrap(true);
+  sheet.getRange('G18:G27').setNumberFormat('mmm d').setHorizontalAlignment('center');
+  sheet.getRange('H18:H27').setHorizontalAlignment('center');
   sheet.setRowHeight(17, 26);
   sheet.setRowHeights(18, 10, 32);
 
@@ -681,7 +666,7 @@ function addCalendarFormulas(ss) {
   const sheet = ss.getSheetByName('Calendar');
   sheet.getRange('AA3').setFormula(getCalendarEventsFormula());
   sheet.getRange('B18').setFormula(getCalendarUpcomingThisWeekFormula());
-  sheet.getRange('F18').setFormula(getCalendarOverdueItemsFormula());
+  sheet.getRange('G18').setFormula(getCalendarOverdueItemsFormula());
   addCalendarMonthlySummaryFormulas(sheet);
 
   for (let r = 0; r < 6; r++) {
@@ -702,8 +687,6 @@ function addCalendarMonthlySummaryFormulas(sheet) {
   sheet.getRange('J9').setFormula(countFormula(''));
   types.forEach((type, i) => {
     sheet.getRange(10 + i, 10).setFormula(countFormula(type));
-    sheet.getRange(18 + i, 11).setFormula(`=$J$${10 + i}`);
-    sheet.getRange(18 + i, 12).setFormula(`=IF($K${18 + i}=0,"",SPARKLINE($K${18 + i},{"charttype","bar";"max",MAX($K$18:$K$22);"color1","#2F80ED"}))`);
   });
 }
 
