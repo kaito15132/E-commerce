@@ -247,50 +247,85 @@ function styleKpiCard(sheet, a1, card) {
 
 function createCalendarSheet(ss) {
   const sheet = ss.getSheetByName('Calendar');
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   formatSheet(sheet, 300, 32);
   sheet.setTabColor(FVD.colors.softTeal);
   sheet.setColumnWidths(1, 1, 24);
   sheet.setColumnWidths(2, 7, 145);
-  sheet.setColumnWidths(10, 8, 120);
+  sheet.setColumnWidths(10, 1, 105);
+  sheet.setColumnWidths(11, 1, 105);
+  sheet.setColumnWidths(12, 1, 180);
+  sheet.setColumnWidths(13, 1, 145);
   sheet.setColumnWidths(27, 6, 120);
-  sheet.setFrozenRows(7);
+  sheet.setFrozenRows(8);
 
-  sheet.getRange('B2:H3').merge().setValue('Deadline Calendar')
+  sheet.getRange('B2:H3').merge().setFormula('=$C$6&" "&$F$6&" Deadline Calendar"')
     .setFontSize(24).setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.darkNavy)
     .setVerticalAlignment('middle');
-  sheet.getRange('B4:H4').merge().setValue('Select a month and year to view project, deliverable, payment, contract, and revision deadlines.')
+  sheet.getRange('B4:H4').merge().setValue('Deadlines populate from the Projects, Deliverables, Payments, Contracts, and Revisions tabs.')
     .setFontColor(FVD.colors.mutedText).setBackground(FVD.colors.white);
 
   sheet.getRange('B6').setValue('Month').setFontWeight('bold').setFontColor(FVD.colors.darkNavy);
-  sheet.getRange('C6').setValue(new Date().getMonth() + 1).setBackground(FVD.colors.white);
+  sheet.getRange('C6').setValue(monthNames[new Date().getMonth()]).setBackground(FVD.colors.white);
   sheet.getRange('E6').setValue('Year').setFontWeight('bold').setFontColor(FVD.colors.darkNavy);
   sheet.getRange('F6').setValue(new Date().getFullYear()).setBackground(FVD.colors.white);
   sheet.getRange('B6:F6').setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('C7').setFormula('=MONTH(DATEVALUE($C$6&" 1"))');
+  sheet.hideRows(7);
 
   sheet.getRange('B8:H8').setValues([['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']]);
   styleTableHeader(sheet.getRange('B8:H8'));
-  sheet.getRange('B9:H44').setBackground(FVD.colors.white).setWrap(true).setVerticalAlignment('top')
+  sheet.getRange('B9:H14').setBackground(FVD.colors.white)
+    .setFontSize(9)
+    .setFontWeight('bold')
+    .setWrap(true)
+    .setVerticalAlignment('top')
+    .setHorizontalAlignment('left')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  for (let row = 9; row <= 44; row++) {
-    const offset = (row - 9) % 6;
-    sheet.setRowHeight(row, offset === 0 ? 24 : 34);
-  }
+  sheet.setRowHeights(9, 6, 118);
 
-  sectionTitle(sheet, 'J2:Q2', 'Legend');
+  sectionTitle(sheet, 'J2:Q2', 'Calendar Legend');
   const legend = [
-    ['Project', FVD.calendarColors.project],
-    ['Deliverable', FVD.calendarColors.deliverable],
-    ['Payment', FVD.calendarColors.payment],
-    ['Contract', FVD.calendarColors.contract],
-    ['Revision', FVD.calendarColors.revision]
+    ['[P]', 'Project deadline or launch date'],
+    ['[D]', 'Deliverable due'],
+    ['[$]', 'Payment due'],
+    ['[C]', 'Contract, NDA, W-9, proposal, or scope deadline'],
+    ['[R]', 'Revision due or approval deadline']
   ];
-  legend.forEach((item, i) => {
-    sheet.getRange(3 + i, 10).setValue(item[0]).setFontWeight('bold').setBackground(item[1]).setFontColor(FVD.colors.textDark);
-    sheet.getRange(3 + i, 11, 1, 6).merge().setValue('Deadline/event type shown inside matching date cells').setBackground(FVD.colors.white).setFontColor(FVD.colors.mutedText);
-  });
+  sheet.getRange(3, 10, legend.length, 2).setValues(legend)
+    .setBackground(FVD.colors.white)
+    .setFontColor(FVD.colors.textDark)
+    .setWrap(true)
+    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('J3:J7').setFontWeight('bold').setHorizontalAlignment('center').setFontColor(FVD.colors.darkNavy);
+  sheet.getRange('L3:Q7').merge().setValue('Each calendar day is one clean box. Prefixes identify deadline type without extra color-coded rows.')
+    .setBackground(FVD.colors.white)
+    .setFontColor(FVD.colors.mutedText)
+    .setWrap(true)
+    .setVerticalAlignment('top')
+    .setBorder(true, true, true, true, null, null, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+
+  sectionTitle(sheet, 'J10:Q10', 'Upcoming This Week');
+  sheet.getRange('J11:M11').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('J11:M11'));
+  sheet.getRange('J12:M21').setBackground(FVD.colors.white)
+    .setWrap(true)
+    .setVerticalAlignment('top')
+    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('J12:J21').setNumberFormat('mmm d');
+
+  sectionTitle(sheet, 'J24:Q24', 'Overdue Items');
+  sheet.getRange('J25:M25').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('J25:M25'));
+  sheet.getRange('J26:M35').setBackground(FVD.colors.white)
+    .setWrap(true)
+    .setVerticalAlignment('top')
+    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange('J26:J35').setNumberFormat('mmm d');
+
   sheet.getRange('AA1:AF1').merge().setValue('Calendar Event Helper').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
+  sheet.getRange('AA2:AF2').setValues([['Date', 'Type', 'Item', 'Vendor', 'Calendar Label', 'Status']]);
   styleTableHeader(sheet.getRange('AA2:AF2'));
-  sheet.getRange('AA2:AF2').setValues([['Date', 'Type', 'Project', 'Vendor', 'Item', 'Status']]);
   sheet.getRange('AA3:AF300').setBackground(FVD.colors.lightGray);
   sheet.hideColumns(27, 6);
 }
@@ -398,7 +433,7 @@ function getSetupLists() {
     Channels: ['Email', 'Slack', 'Text', 'Phone', 'Zoom', 'Google Meet', 'In Person', 'Other'],
     RevisionRounds: ['1', '2', '3', '4', '5+'],
     RevisionStatus: ['Requested', 'In Progress', 'Submitted', 'Approved', 'Complete', 'Overdue'],
-    Months: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+    Months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   };
 }
 
@@ -593,35 +628,24 @@ function addDashboardFormulas(ss) {
 function addCalendarFormulas(ss) {
   const sheet = ss.getSheetByName('Calendar');
   sheet.getRange('AA3').setFormula(getCalendarEventsFormula());
-  const eventRows = [
-    { type: 'Project', offset: 1, color: FVD.calendarColors.project },
-    { type: 'Deliverable', offset: 2, color: FVD.calendarColors.deliverable },
-    { type: 'Payment', offset: 3, color: FVD.calendarColors.payment },
-    { type: 'Contract', offset: 4, color: FVD.calendarColors.contract },
-    { type: 'Revision', offset: 5, color: FVD.calendarColors.revision }
-  ];
+  sheet.getRange('J12').setFormula(getCalendarUpcomingThisWeekFormula());
+  sheet.getRange('J26').setFormula(getCalendarOverdueItemsFormula());
 
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 7; c++) {
-      const baseRow = 9 + r * 6;
-      const cell = sheet.getRange(baseRow, 2 + c);
-      const dateFormula = `=IF(MONTH(DATE($F$6,$C$6,1)-WEEKDAY(DATE($F$6,$C$6,1),1)+1+${r * 7 + c})=$C$6,DATE($F$6,$C$6,1)-WEEKDAY(DATE($F$6,$C$6,1),1)+1+${r * 7 + c},"")`;
-      cell.setFormula(dateFormula)
-        .setNumberFormat('d')
-        .setFontWeight('bold')
-        .setFontColor(FVD.colors.darkNavy)
-        .setBackground(FVD.calendarColors.dateBand)
-        .setHorizontalAlignment('left')
-        .setVerticalAlignment('middle')
-        .setBorder(true, true, true, true, null, null, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-      const dateA1 = cell.getA1Notation();
-      eventRows.forEach(event => {
-        const eventCell = sheet.getRange(baseRow + event.offset, 2 + c);
-        eventCell.setFormula(`=IF(${dateA1}="","",IFERROR(TEXTJOIN(CHAR(10)&"----------------"&CHAR(10),TRUE,FILTER($AE$3:$AE&" - "&$AC$3:$AC,$AA$3:$AA=${dateA1},$AB$3:$AB="${event.type}")),""))`);
-        eventCell.setFontSize(8).setWrap(true).setVerticalAlignment('top').setBackground(event.color).setFontColor(FVD.colors.textDark);
-      });
+      const cell = sheet.getRange(9 + r, 2 + c);
+      const calendarDate = `DATE($F$6,$C$7,1)-WEEKDAY(DATE($F$6,$C$7,1),1)+1+${r * 7 + c}`;
+      cell.setFormula(`=IF(MONTH(${calendarDate})=$C$7,DAY(${calendarDate})&IFERROR(CHAR(10)&TEXTJOIN(CHAR(10),TRUE,FILTER($AE$3:$AE,$AA$3:$AA=${calendarDate})),""),"")`);
     }
   }
+}
+
+function getCalendarUpcomingThisWeekFormula() {
+  return '=IFERROR(SORTN(FILTER({$AA$3:$AA,$AB$3:$AB,$AC$3:$AC,$AD$3:$AD},$AA$3:$AA>=TODAY(),$AA$3:$AA<=TODAY()+7),10,0,1,TRUE),"")';
+}
+
+function getCalendarOverdueItemsFormula() {
+  return '=IFERROR(SORTN(FILTER({$AA$3:$AA,$AB$3:$AB,$AC$3:$AC,$AD$3:$AD},$AA$3:$AA<TODAY(),$AF$3:$AF<>"Complete",$AF$3:$AF<>"Approved",$AF$3:$AF<>"Paid",$AF$3:$AF<>"Signed",$AF$3:$AF<>"Canceled",$AF$3:$AF<>"Not Required"),10,0,1,TRUE),"")';
 }
 
 function getWatchlistFormula() {
@@ -646,12 +670,11 @@ function getUpcomingDeadlinesFormula() {
 
 function getCalendarEventsFormula() {
   return '=IFERROR(QUERY(VSTACK('
-    + 'IFNA(FILTER({Projects!H6:H300,ARRAYFORMULA(IF(Projects!A6:A300<>"","Project","")),Projects!B6:B300,Projects!E6:E300,ARRAYFORMULA(IF(Projects!A6:A300<>"","Start Date","")),Projects!G6:G300},Projects!A6:A300<>""),{"","","","","",""}),'
-    + 'IFNA(FILTER({Projects!I6:I300,ARRAYFORMULA(IF(Projects!A6:A300<>"","Project","")),Projects!B6:B300,Projects!E6:E300,ARRAYFORMULA(IF(Projects!A6:A300<>"","Due/Launch Date","")),Projects!G6:G300},Projects!A6:A300<>""),{"","","","","",""}),'
-    + 'IFNA(FILTER({Deliverables!F6:F300,ARRAYFORMULA(IF(Deliverables!A6:A300<>"","Deliverable","")),Deliverables!C6:C300,Deliverables!D6:D300,Deliverables!E6:E300,Deliverables!G6:G300},Deliverables!A6:A300<>""),{"","","","","",""}),'
-    + 'IFNA(FILTER({Payments!G6:G300,ARRAYFORMULA(IF(Payments!A6:A300<>"","Payment","")),Payments!C6:C300,Payments!D6:D300,Payments!E6:E300,Payments!I6:I300},Payments!A6:A300<>""),{"","","","","",""}),'
-    + 'IFNA(FILTER({Contracts!H6:H300,ARRAYFORMULA(IF(Contracts!A6:A300<>"","Contract","")),Contracts!C6:C300,Contracts!D6:D300,Contracts!E6:E300,Contracts!F6:F300},Contracts!A6:A300<>""),{"","","","","",""}),'
-    + 'IFNA(FILTER({Revisions!H6:H300,ARRAYFORMULA(IF(Revisions!A6:A300<>"","Revision","")),Revisions!C6:C300,Revisions!D6:D300,Revisions!E6:E300,Revisions!I6:I300},Revisions!A6:A300<>""),{"","","","","",""})'
+    + 'IFNA(FILTER({Projects!I6:I300,ARRAYFORMULA(IF(Projects!A6:A300<>"","Project","")),Projects!B6:B300,Projects!E6:E300,ARRAYFORMULA(IF(Projects!A6:A300<>"","[P] "&LEFT(Projects!B6:B300,35),"")),Projects!G6:G300},Projects!A6:A300<>"",Projects!I6:I300<>""),{"","","","","",""}),'
+    + 'IFNA(FILTER({Deliverables!F6:F300,ARRAYFORMULA(IF(Deliverables!A6:A300<>"","Deliverable","")),Deliverables!E6:E300,Deliverables!D6:D300,ARRAYFORMULA(IF(Deliverables!A6:A300<>"","[D] "&LEFT(Deliverables!E6:E300,35),"")),Deliverables!G6:G300},Deliverables!A6:A300<>"",Deliverables!F6:F300<>""),{"","","","","",""}),'
+    + 'IFNA(FILTER({Payments!G6:G300,ARRAYFORMULA(IF(Payments!A6:A300<>"","Payment","")),Payments!E6:E300,Payments!D6:D300,ARRAYFORMULA(IF(Payments!A6:A300<>"","[$] "&LEFT(Payments!E6:E300,35),"")),Payments!I6:I300},Payments!A6:A300<>"",Payments!G6:G300<>""),{"","","","","",""}),'
+    + 'IFNA(FILTER({Contracts!H6:H300,ARRAYFORMULA(IF(Contracts!A6:A300<>"","Contract","")),Contracts!E6:E300,Contracts!D6:D300,ARRAYFORMULA(IF(Contracts!A6:A300<>"","[C] "&LEFT(Contracts!E6:E300,35),"")),Contracts!F6:F300},Contracts!A6:A300<>"",Contracts!H6:H300<>""),{"","","","","",""}),'
+    + 'IFNA(FILTER({Revisions!H6:H300,ARRAYFORMULA(IF(Revisions!A6:A300<>"","Revision","")),Revisions!E6:E300,Revisions!D6:D300,ARRAYFORMULA(IF(Revisions!A6:A300<>"","[R] "&LEFT(Revisions!E6:E300,35),"")),Revisions!I6:I300},Revisions!A6:A300<>"",Revisions!H6:H300<>""),{"","","","","",""})'
     + '),"select * where Col1 is not null order by Col1 asc",0),"")';
 }
 
@@ -718,28 +741,13 @@ function addDateRules(sheet, a1) {
 }
 
 function addCalendarConditionalFormatting(sheet) {
-  const projectRanges = [10, 16, 22, 28, 34, 40].map(row => sheet.getRange(row, 2, 1, 7));
-  const deliverableRanges = [11, 17, 23, 29, 35, 41].map(row => sheet.getRange(row, 2, 1, 7));
-  const paymentRanges = [12, 18, 24, 30, 36, 42].map(row => sheet.getRange(row, 2, 1, 7));
-  const contractRanges = [13, 19, 25, 31, 37, 43].map(row => sheet.getRange(row, 2, 1, 7));
-  const revisionRanges = [14, 20, 26, 32, 38, 44].map(row => sheet.getRange(row, 2, 1, 7));
   const rules = sheet.getConditionalFormatRules();
-  const typeRanges = [
-    [projectRanges, FVD.calendarColors.project],
-    [deliverableRanges, FVD.calendarColors.deliverable],
-    [paymentRanges, FVD.calendarColors.payment],
-    [contractRanges, FVD.calendarColors.contract],
-    [revisionRanges, FVD.calendarColors.revision]
-  ];
-
-  typeRanges.forEach(([ranges, color]) => {
-    rules.push(SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=TRUE')
-      .setBackground(color)
-      .setFontColor(FVD.colors.textDark)
-      .setRanges(ranges)
-      .build());
-  });
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=AND(B9<>"",DATE($F$6,$C$7,VALUE(REGEXEXTRACT(B9,"^\\d+")))=TODAY())')
+    .setBackground('#EAF8F6')
+    .setFontColor(FVD.colors.darkNavy)
+    .setRanges([sheet.getRange('B9:H14')])
+    .build());
 
   sheet.setConditionalFormatRules(rules);
 }
