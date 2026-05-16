@@ -252,10 +252,10 @@ function createCalendarSheet(ss) {
   sheet.setTabColor(FVD.colors.softTeal);
   sheet.setColumnWidths(1, 1, 24);
   sheet.setColumnWidths(2, 7, 145);
-  sheet.setColumnWidths(10, 1, 105);
-  sheet.setColumnWidths(11, 1, 105);
-  sheet.setColumnWidths(12, 1, 180);
-  sheet.setColumnWidths(13, 1, 145);
+  sheet.setColumnWidth(10, 76);
+  sheet.setColumnWidth(11, 92);
+  sheet.setColumnWidth(12, 190);
+  sheet.setColumnWidth(13, 120);
   sheet.setColumnWidths(27, 6, 120);
   sheet.setFrozenRows(8);
 
@@ -284,7 +284,8 @@ function createCalendarSheet(ss) {
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
   sheet.setRowHeights(9, 6, 118);
 
-  sectionTitle(sheet, 'J2:Q2', 'Calendar Legend');
+  // Keep sidebar cards compact and independent from the taller calendar day rows.
+  sectionTitle(sheet, 'J2:M2', 'Calendar Legend');
   const legend = [
     ['[P]', 'Project deadline or launch date'],
     ['[D]', 'Deliverable due'],
@@ -292,36 +293,62 @@ function createCalendarSheet(ss) {
     ['[C]', 'Contract, NDA, W-9, proposal, or scope deadline'],
     ['[R]', 'Revision due or approval deadline']
   ];
-  sheet.getRange(3, 10, legend.length, 2).setValues(legend)
+  sheet.getRange(3, 10, legend.length, 1).setValues(legend.map(item => [item[0]]))
+    .setFontWeight('bold')
+    .setHorizontalAlignment('center')
+    .setVerticalAlignment('middle')
+    .setFontColor(FVD.colors.darkNavy);
+  legend.forEach((item, i) => {
+    sheet.getRange(3 + i, 11, 1, 3).merge().setValue(item[1]);
+  });
+  sheet.getRange('J3:M7')
     .setBackground(FVD.colors.white)
     .setFontColor(FVD.colors.textDark)
+    .setFontSize(9)
     .setWrap(true)
+    .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('J3:J7').setFontWeight('bold').setHorizontalAlignment('center').setFontColor(FVD.colors.darkNavy);
-  sheet.getRange('L3:Q7').merge().setValue('Each calendar day is one clean box. Prefixes identify deadline type without extra color-coded rows.')
+  sheet.setRowHeights(3, 5, 28);
+
+  sectionTitle(sheet, 'J16:M16', 'Upcoming This Week');
+  sheet.getRange('J17:M17').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('J17:M17'));
+  sheet.getRange('J17:M17')
+    .setFontSize(9)
+    .setVerticalAlignment('middle')
+    .setHorizontalAlignment('center');
+  sheet.getRange('J18:M27')
     .setBackground(FVD.colors.white)
-    .setFontColor(FVD.colors.mutedText)
-    .setWrap(true)
-    .setVerticalAlignment('top')
-    .setBorder(true, true, true, true, null, null, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-
-  sectionTitle(sheet, 'J10:Q10', 'Upcoming This Week');
-  sheet.getRange('J11:M11').setValues([['Date', 'Type', 'Item', 'Vendor']]);
-  styleTableHeader(sheet.getRange('J11:M11'));
-  sheet.getRange('J12:M21').setBackground(FVD.colors.white)
-    .setWrap(true)
-    .setVerticalAlignment('top')
+    .setFontSize(9)
+    .setWrap(false)
+    .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('J12:J21').setNumberFormat('mmm d');
+  sheet.getRange('L18:L27').setWrap(true);
+  sheet.getRange('J18:J27').setNumberFormat('mmm d').setHorizontalAlignment('center');
+  sheet.getRange('K18:K27').setHorizontalAlignment('center');
+  sheet.setRowHeight(16, 28);
+  sheet.setRowHeight(17, 26);
+  sheet.setRowHeights(18, 10, 32);
 
-  sectionTitle(sheet, 'J24:Q24', 'Overdue Items');
-  sheet.getRange('J25:M25').setValues([['Date', 'Type', 'Item', 'Vendor']]);
-  styleTableHeader(sheet.getRange('J25:M25'));
-  sheet.getRange('J26:M35').setBackground(FVD.colors.white)
-    .setWrap(true)
-    .setVerticalAlignment('top')
+  sectionTitle(sheet, 'J30:M30', 'Overdue Items');
+  sheet.getRange('J31:M31').setValues([['Date', 'Type', 'Item', 'Vendor']]);
+  styleTableHeader(sheet.getRange('J31:M31'));
+  sheet.getRange('J31:M31')
+    .setFontSize(9)
+    .setVerticalAlignment('middle')
+    .setHorizontalAlignment('center');
+  sheet.getRange('J32:M41')
+    .setBackground(FVD.colors.white)
+    .setFontSize(9)
+    .setWrap(false)
+    .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
-  sheet.getRange('J26:J35').setNumberFormat('mmm d');
+  sheet.getRange('L32:L41').setWrap(true);
+  sheet.getRange('J32:J41').setNumberFormat('mmm d').setHorizontalAlignment('center');
+  sheet.getRange('K32:K41').setHorizontalAlignment('center');
+  sheet.setRowHeight(30, 28);
+  sheet.setRowHeight(31, 26);
+  sheet.setRowHeights(32, 10, 32);
 
   sheet.getRange('AA1:AF1').merge().setValue('Calendar Event Helper').setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.nearBlackNavy);
   sheet.getRange('AA2:AF2').setValues([['Date', 'Type', 'Item', 'Vendor', 'Calendar Label', 'Status']]);
@@ -628,8 +655,8 @@ function addDashboardFormulas(ss) {
 function addCalendarFormulas(ss) {
   const sheet = ss.getSheetByName('Calendar');
   sheet.getRange('AA3').setFormula(getCalendarEventsFormula());
-  sheet.getRange('J12').setFormula(getCalendarUpcomingThisWeekFormula());
-  sheet.getRange('J26').setFormula(getCalendarOverdueItemsFormula());
+  sheet.getRange('J18').setFormula(getCalendarUpcomingThisWeekFormula());
+  sheet.getRange('J32').setFormula(getCalendarOverdueItemsFormula());
 
   for (let r = 0; r < 6; r++) {
     for (let c = 0; c < 7; c++) {
