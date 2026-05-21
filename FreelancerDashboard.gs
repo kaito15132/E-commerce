@@ -74,6 +74,7 @@ function buildFreelancerVendorDashboard() {
   addConditionalFormatting(ss);
   SpreadsheetApp.flush();
   addDashboardCharts(ss);
+  addProjectsInsightCharts(ss);
   finalizeWorkbook(ss);
 }
 
@@ -369,8 +370,64 @@ function createCalendarSheet(ss) {
 }
 
 function createProjectsSheet(ss) {
+  const sheet = ss.getSheetByName('Projects');
   const headers = ['Project ID', 'Project Name', 'Project Type', 'Client/Business Area', 'Primary Vendor', 'Priority', 'Status', 'Start Date', 'Due/Launch Date', 'Budget', 'Actual Spend', 'Budget Status', 'Progress %', 'Notes'];
-  createTrackerSheet(ss.getSheetByName('Projects'), 'Projects', 'Plan and monitor outsourced projects, timelines, budgets, and progress.', headers);
+  formatSheet(sheet, FVD.maxRows, 40);
+  sheet.setFrozenRows(23);
+  sheet.setTabColor(FVD.colors.accentBlue);
+
+  sheet.getRange(1, 1, 2, headers.length).merge().setValue('Projects')
+    .setFontSize(22).setFontWeight('bold').setFontColor(FVD.colors.white).setBackground(FVD.colors.darkNavy)
+    .setVerticalAlignment('middle');
+  sheet.getRange(3, 1, 1, headers.length).merge().setValue('Plan and monitor outsourced projects, timelines, budgets, and progress.')
+    .setFontColor(FVD.colors.mutedText).setBackground(FVD.colors.white);
+
+  sectionTitle(sheet, 'A5:N5', 'Projects Insight Summary');
+  createProjectsInsightSection(sheet);
+
+  sheet.getRange(23, 1, 1, headers.length).setValues([headers]);
+  styleTableHeader(sheet.getRange(23, 1, 1, headers.length));
+  sheet.getRange(24, 1, FVD.maxRows - 23, headers.length)
+    .setBackground(FVD.colors.white)
+    .setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID)
+    .setVerticalAlignment('middle')
+    .setWrap(true);
+  setColumnWidths(sheet, headers);
+  sheet.getRange('O:AN').setBackground(FVD.colors.lightGray);
+  sheet.hideColumns(15, 26);
+}
+
+function createProjectsInsightSection(sheet) {
+  const cards = [
+    ['Active Projects', 'Projects currently moving'],
+    ['Due Soon', 'Due within 7 days'],
+    ['Overdue Projects', 'Past due and incomplete'],
+    ['Over Budget', 'Actual spend above budget'],
+    ['Avg Progress', 'Average completion']
+  ];
+  cards.forEach((card, i) => {
+    const col = 1 + i * 3;
+    const endCol = col + 2;
+    sheet.getRange(6, col, 1, 3).merge().setValue(card[0]).setBackground(FVD.colors.nearBlackNavy).setFontColor(FVD.colors.white).setFontWeight('bold');
+    sheet.getRange(7, col, 2, 3).merge().setBackground(FVD.colors.white).setFontSize(24).setFontWeight('bold').setHorizontalAlignment('left');
+    sheet.getRange(9, col, 1, 3).merge().setValue(card[1]).setBackground(FVD.colors.white).setFontSize(9).setFontColor(FVD.colors.mutedText);
+    sheet.getRange(6, col, 4, 3).setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
+  });
+
+  sectionTitle(sheet, 'A11:G11', 'Needs Attention');
+  sheet.getRange('A12:F12').setValues([['Project Name', 'Due/Launch Date', 'Status', 'Priority', 'Budget Status', 'Progress %']]);
+  styleTableHeader(sheet.getRange('A12:F12'));
+  sheet.getRange('A13:F20').setBackground(FVD.colors.white).setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID).setWrap(true);
+
+  sectionTitle(sheet, 'H11:N11', 'Project Status Breakdown');
+  sheet.getRange('O1:P1').setValues([['Status', 'Count']]);
+  styleTableHeader(sheet.getRange('O1:P1'));
+  sheet.getRange('O2:P20').setBackground(FVD.colors.white);
+
+  sectionTitle(sheet, 'H17:N17', 'Budget vs Actual Spend');
+  sheet.getRange('R1:T1').setValues([['Project Name', 'Budget', 'Actual Spend']]);
+  styleTableHeader(sheet.getRange('R1:T1'));
+  sheet.getRange('R2:T25').setBackground(FVD.colors.white);
 }
 
 function createVendorsSheet(ss) {
@@ -488,7 +545,7 @@ function addSampleData(ss) {
     ['P-007', 'Blog Content Sprint', 'Copywriting', 'Content', 'Jordan Lee', 'Medium', 'On Hold', d(-22), d(28), 1600, 400, '', 0.25, 'Paused while keywords are finalized.'],
     ['P-008', 'Virtual Assistant Setup', 'Admin', 'Operations', 'Alex Rivera', 'Low', 'Active', d(-7), d(10), 750, 300, '', 0.4, 'Inbox labels and SOP setup started.']
   ];
-  ss.getSheetByName('Projects').getRange(6, 1, projects.length, projects[0].length).setValues(projects);
+  ss.getSheetByName('Projects').getRange(24, 1, projects.length, projects[0].length).setValues(projects);
 
   const vendors = [
     ['V-001', 'Maya Chen', 'Designer', 'maya@example.com', '555-0101', 'mayachen.design', 'Fixed Project', 5200, '50% deposit, 50% final', 'Signed', 4.9, 'Yes', 'Excellent UX and visual polish.'],
@@ -569,9 +626,9 @@ function addDropdowns(ss) {
     ranges[name] = setup.getRange(6, i + 1, 80, 1);
   });
 
-  addValidation(ss, 'Projects', 6, 3, 'ProjectTypes', ranges);
-  addValidation(ss, 'Projects', 6, 6, 'ProjectPriority', ranges);
-  addValidation(ss, 'Projects', 6, 7, 'ProjectStatus', ranges);
+  addValidation(ss, 'Projects', 24, 3, 'ProjectTypes', ranges);
+  addValidation(ss, 'Projects', 24, 6, 'ProjectPriority', ranges);
+  addValidation(ss, 'Projects', 24, 7, 'ProjectStatus', ranges);
 
   addValidation(ss, 'Vendors', 6, 3, 'VendorRoles', ranges);
   addValidation(ss, 'Vendors', 6, 7, 'RateTypes', ranges);
@@ -610,14 +667,15 @@ function addValidation(ss, sheetName, startRow, col, listName, ranges) {
 
 function addFormulas(ss) {
   const projects = ss.getSheetByName('Projects');
-  projects.getRange('L6:L300').setFormulaR1C1('=IF(RC1="","",IF(RC[-2]="","No Budget",IF(RC[-1]>RC[-2],"Over Budget","On Track")))');
-  projects.getRange('M6:M300').setNumberFormat('0%');
-  projects.getRange('J6:K300').setNumberFormat('$#,##0');
-  ss.getSheetByName('Payments').getRange('F6:F300').setNumberFormat('$#,##0');
+  projects.getRange('L24:L300').setFormulaR1C1('=IF(RC1="","",IF(RC[-2]="","No Budget",IF(RC[-1]>RC[-2],"Over Budget","On Track")))');
+  projects.getRange('M24:M300').setNumberFormat('0%');
+  projects.getRange('J24:K300').setNumberFormat('$#,##0');
+  ss.getSheetByName('Payments').getRange('F24:F300').setNumberFormat('$#,##0');
   ss.getSheetByName('Vendors').getRange('H6:H300').setNumberFormat('$#,##0');
 
   addDashboardFormulas(ss);
   addCalendarFormulas(ss);
+  addProjectsInsightFormulas(ss);
 }
 
 function addDashboardFormulas(ss) {
@@ -729,12 +787,62 @@ function getCalendarEventsFormula() {
     + '),"select * where Col1 is not null order by Col1 asc",0),"")';
 }
 
+
+function addProjectsInsightFormulas(ss) {
+  const sheet = ss.getSheetByName('Projects');
+  sheet.getRange('A7').setFormula('=COUNTIFS(G24:G,"Active",B24:B,"<>")+COUNTIFS(G24:G,"In Progress",B24:B,"<>")');
+  sheet.getRange('D7').setFormula('=COUNTIFS(I24:I,">="&TODAY(),I24:I,"<="&TODAY()+7,G24:G,"<>Complete",B24:B,"<>")');
+  sheet.getRange('G7').setFormula('=COUNTIFS(I24:I,"<"&TODAY(),G24:G,"<>Complete",B24:B,"<>")');
+  sheet.getRange('J7').setFormula('=COUNTIFS(L24:L,"Over Budget",B24:B,"<>")+COUNTIFS(B24:B,"<>",K24:K,">"&J24:J)');
+  sheet.getRange('M7').setFormula('=IFERROR(AVERAGE(FILTER(M24:M300,B24:B300<>"")),0)');
+  sheet.getRange('M7').setNumberFormat('0%');
+
+  sheet.getRange('A13').setFormula('=IFERROR(QUERY(FILTER({B24:B300,I24:I300,G24:G300,F24:F300,L24:L300,M24:M300},B24:B300<>"",((I24:I300<TODAY())*(G24:G300<>"Complete"))+((I24:I300>=TODAY())*(I24:I300<=TODAY()+7)*(G24:G300<>"Complete"))+(L24:L300="Over Budget")+(K24:K300>J24:J300)+(G24:G300="On Hold")+(G24:G300="Waiting on Client")+(G24:G300="Waiting on Vendor")+((F24:F300="High")*(G24:G300<>"Complete"))),"select * limit 8",0),{"No projects need attention right now.","","","","",""})');
+  sheet.getRange('B13:B20').setNumberFormat('mmm d');
+
+  sheet.getRange('O2').setFormula('=QUERY(G24:G300,"select G, count(G) where G is not null group by G label G \'Status\', count(G) \'Count\'",0)');
+  sheet.getRange('R2').setFormula('=QUERY(FILTER({B24:B300,J24:J300,K24:K300},B24:B300<>""),"select Col1, Col2, Col3 limit 12",0)');
+}
+
+function addProjectsInsightCharts(ss) {
+  const sheet = ss.getSheetByName('Projects');
+  sheet.getCharts().forEach(chart => {
+    const c = chart.getOptions();
+    if (c && (c.title === 'Project Status Breakdown' || c.title === 'Budget vs Actual Spend')) sheet.removeChart(chart);
+  });
+
+  const statusChart = sheet.newChart()
+    .addRange(sheet.getRange('O1:P20'))
+    .setChartType(Charts.ChartType.PIE)
+    .setOption('pieHole', 0.55)
+    .setOption('title', 'Project Status Breakdown')
+    .setOption('backgroundColor', FVD.colors.white)
+    .setOption('legend', { position: 'right' })
+    .setPosition(12, 8, 0, 0)
+    .setOption('width', 470)
+    .setOption('height', 220)
+    .build();
+  sheet.insertChart(statusChart);
+
+  const spendChart = sheet.newChart()
+    .addRange(sheet.getRange('R1:T13'))
+    .setChartType(Charts.ChartType.BAR)
+    .setOption('title', 'Budget vs Actual Spend')
+    .setOption('backgroundColor', FVD.colors.white)
+    .setOption('legend', { position: 'top' })
+    .setPosition(18, 8, 0, 0)
+    .setOption('width', 470)
+    .setOption('height', 240)
+    .build();
+  sheet.insertChart(spendChart);
+}
+
 function addConditionalFormatting(ss) {
   FVD.sheets.forEach(name => ss.getSheetByName(name).clearConditionalFormatRules());
-  addStatusRules(ss.getSheetByName('Projects'), 'G6:G300', ['Complete'], ['Canceled'], ['Waiting on Vendor', 'Waiting on Client', 'On Hold']);
+  addStatusRules(ss.getSheetByName('Projects'), 'G24:G300', ['Complete'], ['Canceled'], ['Waiting on Vendor', 'Waiting on Client', 'On Hold']);
   addTextRule(ss.getSheetByName('Projects'), 'F6:F300', 'High', FVD.colors.softRed);
-  addTextRule(ss.getSheetByName('Projects'), 'L6:L300', 'Over Budget', FVD.colors.softRed);
-  addDateRules(ss.getSheetByName('Projects'), 'I6:I300');
+  addTextRule(ss.getSheetByName('Projects'), 'L24:L300', 'Over Budget', FVD.colors.softRed);
+  addDateRules(ss.getSheetByName('Projects'), 'I24:I300');
 
   addStatusRules(ss.getSheetByName('Deliverables'), 'G6:G300', ['Approved', 'Complete'], ['Overdue', 'Needs Revision'], ['Submitted']);
   addTextRule(ss.getSheetByName('Deliverables'), 'H6:H300', 'High', FVD.colors.softRed);
