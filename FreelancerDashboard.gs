@@ -373,7 +373,7 @@ function createProjectsSheet(ss) {
   const sheet = ss.getSheetByName('Projects');
   const headers = ['Project ID', 'Project Name', 'Project Type', 'Client/Business Area', 'Primary Vendor', 'Priority', 'Status', 'Start Date', 'Due/Launch Date', 'Budget', 'Actual Spend', 'Budget Status', 'Progress %', 'Notes'];
   formatSheet(sheet, FVD.maxRows, 40);
-  sheet.setFrozenRows(23);
+  sheet.setFrozenRows(0);
   sheet.setTabColor(FVD.colors.accentBlue);
 
   sheet.getRange(1, 1, 2, headers.length).merge().setValue('Projects')
@@ -414,17 +414,14 @@ function createProjectsInsightSection(sheet) {
     sheet.getRange(6, col, 4, 3).setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID);
   });
 
-  sectionTitle(sheet, 'A11:G11', 'Needs Attention');
   sheet.getRange('A12:F12').setValues([['Project Name', 'Due/Launch Date', 'Status', 'Priority', 'Budget Status', 'Progress %']]);
   styleTableHeader(sheet.getRange('A12:F12'));
   sheet.getRange('A13:F20').setBackground(FVD.colors.white).setBorder(true, true, true, true, true, true, FVD.colors.borderGray, SpreadsheetApp.BorderStyle.SOLID).setWrap(true);
 
-  sectionTitle(sheet, 'H11:N11', 'Project Status Breakdown');
   sheet.getRange('O1:P1').setValues([['Status', 'Count']]);
   styleTableHeader(sheet.getRange('O1:P1'));
   sheet.getRange('O2:P20').setBackground(FVD.colors.white);
 
-  sectionTitle(sheet, 'H17:N17', 'Budget vs Actual Spend');
   sheet.getRange('R1:T1').setValues([['Project Name', 'Budget', 'Actual Spend']]);
   styleTableHeader(sheet.getRange('R1:T1'));
   sheet.getRange('R2:T25').setBackground(FVD.colors.white);
@@ -818,9 +815,9 @@ function addProjectsInsightCharts(ss) {
     .setOption('title', 'Project Status Breakdown')
     .setOption('backgroundColor', FVD.colors.white)
     .setOption('legend', { position: 'right' })
-    .setPosition(12, 8, 0, 0)
+    .setPosition(11, 8, 0, 0)
     .setOption('width', 470)
-    .setOption('height', 220)
+    .setOption('height', 170)
     .build();
   sheet.insertChart(statusChart);
 
@@ -830,9 +827,9 @@ function addProjectsInsightCharts(ss) {
     .setOption('title', 'Budget vs Actual Spend')
     .setOption('backgroundColor', FVD.colors.white)
     .setOption('legend', { position: 'top' })
-    .setPosition(18, 8, 0, 0)
+    .setPosition(16, 8, 0, 0)
     .setOption('width', 470)
-    .setOption('height', 240)
+    .setOption('height', 150)
     .build();
   sheet.insertChart(spendChart);
 }
