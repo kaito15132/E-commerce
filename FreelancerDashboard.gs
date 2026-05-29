@@ -797,8 +797,16 @@ function addProjectsInsightFormulas(ss) {
   sheet.getRange('A13').setFormula('=IFERROR(QUERY(FILTER({B24:B300,I24:I300,G24:G300,F24:F300,L24:L300,M24:M300},B24:B300<>"",((I24:I300<TODAY())*(G24:G300<>"Complete"))+((I24:I300>=TODAY())*(I24:I300<=TODAY()+7)*(G24:G300<>"Complete"))+(L24:L300="Over Budget")+(K24:K300>J24:J300)+(G24:G300="On Hold")+(G24:G300="Waiting on Client")+(G24:G300="Waiting on Vendor")+((F24:F300="High")*(G24:G300<>"Complete"))),"select * limit 8",0),{"No projects need attention right now.","","","","",""})');
   sheet.getRange('B13:B20').setNumberFormat('mmm d');
 
-  sheet.getRange('O2').setFormula('=QUERY(G24:G300,"select G, count(G) where G is not null group by G label G \'Status\', count(G) \'Count\'",0)');
-  sheet.getRange('R2').setFormula('=QUERY(FILTER({B24:B300,J24:J300,K24:K300},B24:B300<>""),"select Col1, Col2, Col3 limit 12",0)');
+  addProjectChartHelperFormulas(ss);
+}
+
+function addProjectChartHelperFormulas(ss) {
+  const sheet = ss.getSheetByName('Projects');
+  sheet.getRange('O1:P20').clearContent();
+  sheet.getRange('R1:T25').clearContent();
+  sheet.getRange('O1').setFormula('=VSTACK({"Status","Count"},IFERROR(QUERY({"Active",COUNTIFS(G24:G300,"Active",B24:B300,"<>");"In Progress",COUNTIFS(G24:G300,"In Progress",B24:B300,"<>");"Waiting on Client",COUNTIFS(G24:G300,"Waiting on Client",B24:B300,"<>");"Waiting on Vendor",COUNTIFS(G24:G300,"Waiting on Vendor",B24:B300,"<>");"On Hold",COUNTIFS(G24:G300,"On Hold",B24:B300,"<>");"Complete",COUNTIFS(G24:G300,"Complete",B24:B300,"<>")},"select Col1, Col2 where Col2 > 0 label Col1 \'\', Col2 \'\'",0),{"No projects",0}))');
+  sheet.getRange('R1').setFormula('=VSTACK({"Project Name","Budget","Actual Spend"},IFERROR(QUERY(FILTER({B24:B300,J24:J300,K24:K300},B24:B300<>""),"select Col1, Col2, Col3 limit 12 label Col1 \'\', Col2 \'\', Col3 \'\'",0),{"No projects",0,0}))');
+  sheet.getRange('S2:T25').setNumberFormat('$#,##0');
 }
 
 function addProjectsInsightCharts(ss) {
@@ -811,27 +819,47 @@ function addProjectsInsightCharts(ss) {
   const statusChart = sheet.newChart()
     .addRange(sheet.getRange('O1:P20'))
     .setChartType(Charts.ChartType.PIE)
+    .setNumHeaders(1)
     .setOption('pieHole', 0.55)
     .setOption('title', 'Project Status Breakdown')
+    .setOption('titleTextStyle', { color: FVD.colors.textDark, fontSize: 12, bold: true })
     .setOption('backgroundColor', FVD.colors.white)
-    .setOption('legend', { position: 'right' })
-    .setPosition(11, 8, 0, 0)
-    .setOption('width', 470)
-    .setOption('height', 170)
+    .setOption('colors', [FVD.colors.accentBlue, FVD.colors.softTeal, FVD.colors.softYellow, FVD.colors.softBeige, FVD.colors.softCoral, FVD.colors.darkNavy, '#9CA3AF', '#C7D2FE'])
+    .setOption('legend', { position: 'right', textStyle: { color: FVD.colors.textDark, fontSize: 9 } })
+    .setOption('chartArea', { left: 8, top: 38, width: '58%', height: '72%' })
+    .setPosition(11, 7, 0, 0)
+    .setOption('width', 315)
+    .setOption('height', 235)
     .build();
   sheet.insertChart(statusChart);
 
   const spendChart = sheet.newChart()
     .addRange(sheet.getRange('R1:T13'))
     .setChartType(Charts.ChartType.BAR)
+    .setNumHeaders(1)
     .setOption('title', 'Budget vs Actual Spend')
+    .setOption('titleTextStyle', { color: FVD.colors.textDark, fontSize: 13, bold: true })
     .setOption('backgroundColor', FVD.colors.white)
-    .setOption('legend', { position: 'top' })
-    .setPosition(16, 8, 0, 0)
-    .setOption('width', 470)
-    .setOption('height', 150)
+    .setOption('colors', [FVD.colors.accentBlue, FVD.colors.softCoral])
+    .setOption('legend', { position: 'top', textStyle: { color: FVD.colors.textDark, fontSize: 10 } })
+    .setOption('hAxis', { format: '$#,##0', textStyle: { color: FVD.colors.mutedText, fontSize: 9 }, minValue: 0 })
+    .setOption('vAxis', { textStyle: { color: FVD.colors.textDark, fontSize: 9 } })
+    .setOption('chartArea', { left: 150, top: 52, width: '70%', height: '64%' })
+    .setPosition(11, 10, 12, 0)
+    .setOption('width', 660)
+    .setOption('height', 235)
     .build();
   sheet.insertChart(spendChart);
+}
+
+function repairProjectsInsightCharts() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Projects');
+  if (!sheet) throw new Error('Projects sheet not found.');
+  sheet.setFrozenRows(0);
+  addProjectChartHelperFormulas(ss);
+  SpreadsheetApp.flush();
+  addProjectsInsightCharts(ss);
 }
 
 function addConditionalFormatting(ss) {
