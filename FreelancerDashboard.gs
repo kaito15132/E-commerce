@@ -20,8 +20,7 @@ const FVD = {
     'Assets',
     'Communication Log',
     'Revisions',
-    'Setup',
-    '_ProjectHelpers'
+    'Setup'
   ],
   colors: {
     darkNavy: '#1F2D3A',
@@ -66,7 +65,6 @@ function buildFreelancerVendorDashboard() {
   createAssetsSheet(ss);
   createCommunicationLogSheet(ss);
   createRevisionsSheet(ss);
-  createProjectHelpersSheet(ss);
   createDashboardSheet(ss);
   createCalendarSheet(ss);
 
@@ -397,19 +395,6 @@ function createProjectsSheet(ss) {
   setColumnWidths(sheet, headers);
   sheet.getRange('O:AN').setBackground(FVD.colors.lightGray);
   sheet.hideColumns(15, 26);
-}
-
-function createProjectHelpersSheet(ss) {
-  const sheet = ss.getSheetByName('_ProjectHelpers');
-  formatSheet(sheet, 80, 8);
-  sheet.setTabColor(FVD.colors.mutedText);
-  sheet.getRange('A1:B1').setValues([['Status', 'Count']]);
-  sheet.getRange('D1:F1').setValues([['Project Name', 'Budget', 'Actual Spend']]);
-  styleTableHeader(sheet.getRange('A1:B1'));
-  styleTableHeader(sheet.getRange('D1:F1'));
-  sheet.getRange('A2:B20').setBackground(FVD.colors.white);
-  sheet.getRange('D2:F25').setBackground(FVD.colors.white);
-  sheet.hideSheet();
 }
 
 function createProjectsInsightSection(sheet) {
@@ -816,22 +801,23 @@ function addProjectsInsightFormulas(ss) {
 }
 
 function addProjectChartHelperFormulas(ss) {
-  const helper = ss.getSheetByName('_ProjectHelpers');
-  helper.getRange('A2').setFormula('=IFERROR(QUERY({"Active",COUNTIFS(Projects!G24:G300,"Active",Projects!B24:B300,"<>");"In Progress",COUNTIFS(Projects!G24:G300,"In Progress",Projects!B24:B300,"<>");"Waiting on Client",COUNTIFS(Projects!G24:G300,"Waiting on Client",Projects!B24:B300,"<>");"Waiting on Vendor",COUNTIFS(Projects!G24:G300,"Waiting on Vendor",Projects!B24:B300,"<>");"On Hold",COUNTIFS(Projects!G24:G300,"On Hold",Projects!B24:B300,"<>");"Complete",COUNTIFS(Projects!G24:G300,"Complete",Projects!B24:B300,"<>")},"select Col1, Col2 where Col2 > 0 label Col1 \'\', Col2 \'\'",0),"")');
-  helper.getRange('D2').setFormula('=IFERROR(QUERY(FILTER({Projects!B24:B300,Projects!J24:J300,Projects!K24:K300},Projects!B24:B300<>""),"select Col1, Col2, Col3 limit 12 label Col1 \'\', Col2 \'\', Col3 \'\'",0),"")');
-  helper.getRange('E2:F25').setNumberFormat('$#,##0');
+  const sheet = ss.getSheetByName('Projects');
+  sheet.getRange('O1:P20').clearContent();
+  sheet.getRange('R1:T25').clearContent();
+  sheet.getRange('O1').setFormula('=VSTACK({"Status","Count"},IFERROR(QUERY({"Active",COUNTIFS(G24:G300,"Active",B24:B300,"<>");"In Progress",COUNTIFS(G24:G300,"In Progress",B24:B300,"<>");"Waiting on Client",COUNTIFS(G24:G300,"Waiting on Client",B24:B300,"<>");"Waiting on Vendor",COUNTIFS(G24:G300,"Waiting on Vendor",B24:B300,"<>");"On Hold",COUNTIFS(G24:G300,"On Hold",B24:B300,"<>");"Complete",COUNTIFS(G24:G300,"Complete",B24:B300,"<>")},"select Col1, Col2 where Col2 > 0 label Col1 \'\', Col2 \'\'",0),{"No projects",0}))');
+  sheet.getRange('R1').setFormula('=VSTACK({"Project Name","Budget","Actual Spend"},IFERROR(QUERY(FILTER({B24:B300,J24:J300,K24:K300},B24:B300<>""),"select Col1, Col2, Col3 limit 12 label Col1 \'\', Col2 \'\', Col3 \'\'",0),{"No projects",0,0}))');
+  sheet.getRange('S2:T25').setNumberFormat('$#,##0');
 }
 
 function addProjectsInsightCharts(ss) {
   const sheet = ss.getSheetByName('Projects');
-  const helper = ss.getSheetByName('_ProjectHelpers');
   sheet.getCharts().forEach(chart => {
     const c = chart.getOptions();
     if (c && (c.title === 'Project Status Breakdown' || c.title === 'Budget vs Actual Spend')) sheet.removeChart(chart);
   });
 
   const statusChart = sheet.newChart()
-    .addRange(helper.getRange('A1:B20'))
+    .addRange(sheet.getRange('O1:P20'))
     .setChartType(Charts.ChartType.PIE)
     .setNumHeaders(1)
     .setOption('pieHole', 0.55)
@@ -848,7 +834,7 @@ function addProjectsInsightCharts(ss) {
   sheet.insertChart(statusChart);
 
   const spendChart = sheet.newChart()
-    .addRange(helper.getRange('D1:F13'))
+    .addRange(sheet.getRange('R1:T13'))
     .setChartType(Charts.ChartType.BAR)
     .setNumHeaders(1)
     .setOption('title', 'Budget vs Actual Spend')
@@ -864,6 +850,16 @@ function addProjectsInsightCharts(ss) {
     .setOption('height', 235)
     .build();
   sheet.insertChart(spendChart);
+}
+
+function repairProjectsInsightCharts() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Projects');
+  if (!sheet) throw new Error('Projects sheet not found.');
+  sheet.setFrozenRows(0);
+  addProjectChartHelperFormulas(ss);
+  SpreadsheetApp.flush();
+  addProjectsInsightCharts(ss);
 }
 
 function addConditionalFormatting(ss) {
